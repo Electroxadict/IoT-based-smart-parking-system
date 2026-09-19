@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Smart Parking System</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            color: #111827;
+        }
+
+        header {
+            background: #111827;
+            color: white;
+            padding: 25px 5%;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 32px;
+        }
+
+        header p {
+            margin-top: 8px;
+            color: #cbd5e1;
+        }
+
+        .container {
+            width: 92%;
+            max-width: 1400px;
+            margin: 30px auto;
+        }
+
+        .status {
+            background: white;
+            padding: 18px 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
+        .online {
+            color: #16a34a;
+            font-weight: bold;
+        }
+
+        .offline {
+            color: #dc2626;
+            font-weight: bold;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 35px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
+        .summary-card h3 {
+            margin: 0 0 10px;
+            color: #64748b;
+        }
+
+        .number {
+            font-size: 45px;
+            font-weight: bold;
+        }
+
+        .slots-title {
+            margin-bottom: 20px;
+        }
+
+        .slots {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+
+        .slot {
+            padding: 45px 20px;
+            border-radius: 18px;
+            text-align: center;
+            color: white;
+            transition: 0.2s;
+        }
+
+        .free {
+            background: #16a34a;
+        }
+
+        .occupied {
+            background: #dc2626;
+        }
+
+        .slot h2 {
+            margin: 0 0 15px;
+            font-size: 35px;
+        }
+
+        .slot p {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .info {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .info-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
+        .info-card h3 {
+            margin: 0 0 10px;
+            color: #64748b;
+        }
+
+        .info-card p {
+            margin: 0;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .debug {
+            margin-top: 30px;
+            background: #111827;
+            color: #22c55e;
+            padding: 20px;
+            border-radius: 12px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        @media (max-width: 800px) {
+
+            .summary,
+            .slots,
+            .info {
+                grid-template-columns: 1fr;
+            }
+
+            .status {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<header>
+
+    <h1>SMART PARKING SYSTEM</h1>
+
+    <p>
+        ESP32 Based Parking Management Dashboard
+    </p>
+
+</header>
+
+
+<div class="container">
+
+
+    <!-- CONNECTION -->
+
+    <div class="status">
+
+        <div id="connection">
+            🔴 Connecting...
+        </div>
+
+        <div>
+            Last Update:
+            <strong id="lastUpdate">
+                Never
+            </strong>
+        </div>
+
+    </div>
+
+
+    <!-- SUMMARY -->
+
+    <div class="summary">
+
+        <div class="summary-card">
+
+            <h3>TOTAL SLOTS</h3>
+
+            <div
+                class="number"
+                id="totalSlots">
+                3
+            </div>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <h3>AVAILABLE</h3>
+
+            <div
+                class="number"
+                id="availableSlots">
+                3
+            </div>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <h3>OCCUPIED</h3>
+
+            <div
+                class="number"
+                id="occupiedSlots">
+                0
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- SLOTS -->
+
+    <h2 class="slots-title">
+        Parking Slots
+    </h2>
+
+
+    <div class="slots">
+
+
+        <div
+            id="slot2"
+            class="slot free">
+
+            <h2>P2</h2>
+
+            <p id="slot2Text">
+                FREE
+            </p>
+
+        </div>
+
+
+        <div
+            id="slot3"
+            class="slot free">
+
+            <h2>P3</h2>
+
+            <p id="slot3Text">
+                FREE
+            </p>
+
+        </div>
+
+
+        <div
+            id="slot4"
+            class="slot free">
+
+            <h2>P4</h2>
+
+            <p id="slot4Text">
+                FREE
+            </p>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- SYSTEM INFORMATION -->
+
+    <div class="info">
+
+
+        <div class="info-card">
+
+            <h3>ENTRY STATUS</h3>
+
+            <p id="entryStatus">
+                WAITING
+            </p>
+
+        </div>
+
+
+        <div class="info-card">
+
+            <h3>BARRIER</h3>
+
+            <p id="barrier">
+                CLOSED
+            </p>
+
+        </div>
+
+
+        <div class="info-card">
+
+            <h3>ENTRY SENSOR</h3>
+
+            <p id="vehicle">
+                CLEAR
+            </p>
+
+        </div>
+
+
+        <div class="info-card">
+
+            <h3>LAST RFID</h3>
+
+            <p id="rfid">
+                NONE
+            </p>
+
+        </div>
+
+
+        <div class="info-card">
+
+            <h3>USER</h3>
+
+            <p id="user">
+                NONE
+            </p>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- DEBUG DATA -->
+
+    <div class="debug">
+
+        <strong>LIVE API DATA</strong>
+
+        <br><br>
+
+        <span id="debugData">
+            Waiting for Flask...
+        </span>
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+
+// ============================================================
+// UPDATE DASHBOARD
+// ============================================================
+
+async function updateDashboard() {
+
+    try {
+
+        const response = await fetch(
+            "/api/status?t=" + Date.now(),
+            {
+                method: "GET",
+                cache: "no-store"
+            }
+        );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "HTTP " + response.status
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "Flask data:",
+            data
+        );
+
+
+        // ====================================================
+        // CONNECTION
+        // ====================================================
+
+        const connection =
+            document.getElementById(
+                "connection"
+            );
+
+
+        if (data.esp32_online) {
+
+            connection.innerHTML =
+                "🟢 ESP32 Connected";
+
+            connection.className =
+                "online";
+
+        }
+
+        else {
+
+            connection.innerHTML =
+                "🟡 ESP32 Waiting for Data";
+
+            connection.className =
+                "offline";
+        }
+
+
+        // ====================================================
+        // SUMMARY
+        // ====================================================
+
+        document.getElementById(
+            "totalSlots"
+        ).textContent =
+            data.total_slots;
+
+
+        document.getElementById(
+            "availableSlots"
+        ).textContent =
+            data.available_slots;
+
+
+        document.getElementById(
+            "occupiedSlots"
+        ).textContent =
+            data.occupied_slots;
+
+
+        // ====================================================
+        // SLOT 2
+        // ====================================================
+
+        updateSlot(
+            "slot2",
+            "slot2Text",
+            data.slot2
+        );
+
+
+        // ====================================================
+        // SLOT 3
+        // ====================================================
+
+        updateSlot(
+            "slot3",
+            "slot3Text",
+            data.slot3
+        );
+
+
+        // ====================================================
+        // SLOT 4
+        // ====================================================
+
+        updateSlot(
+            "slot4",
+            "slot4Text",
+            data.slot4
+        );
+
+
+        // ====================================================
+        // OTHER DATA
+        // ====================================================
+
+        document.getElementById(
+            "entryStatus"
+        ).textContent =
+            data.entry_status;
+
+
+        document.getElementById(
+            "barrier"
+        ).textContent =
+            data.barrier;
+
+
+        document.getElementById(
+            "vehicle"
+        ).textContent =
+            data.vehicle_detected
+                ? "VEHICLE DETECTED"
+                : "CLEAR";
+
+
+        document.getElementById(
+            "rfid"
+        ).textContent =
+            data.last_rfid;
+
+
+        document.getElementById(
+            "user"
+        ).textContent =
+            data.last_user;
+
+
+        document.getElementById(
+            "lastUpdate"
+        ).textContent =
+            data.last_update;
+
+
+        // ====================================================
+        // DEBUG
+        // ====================================================
+
+        document.getElementById(
+            "debugData"
+        ).textContent =
+            JSON.stringify(
+                data,
+                null,
+                2
+            );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Dashboard error:",
+            error
+        );
+
+
+        document.getElementById(
+            "connection"
+        ).innerHTML =
+            "🔴 Cannot reach Flask";
+
+
+        document.getElementById(
+            "connection"
+        ).className =
+            "offline";
+
+
+        document.getElementById(
+            "debugData"
+        ).textContent =
+            "ERROR: " +
+            error.message;
+
+    }
+
+}
+
+
+// ============================================================
+// SLOT UPDATE
+// ============================================================
+
+function updateSlot(
+    slotId,
+    textId,
+    occupied
+) {
+
+    const slot =
+        document.getElementById(slotId);
+
+    const text =
+        document.getElementById(textId);
+
+
+    if (occupied === true) {
+
+        slot.classList.remove(
+            "free"
+        );
+
+        slot.classList.add(
+            "occupied"
+        );
+
+        text.textContent =
+            "OCCUPIED";
+
+    }
+
+    else {
+
+        slot.classList.remove(
+            "occupied"
+        );
+
+        slot.classList.add(
+            "free"
+        );
+
+        text.textContent =
+            "FREE";
+    }
+
+}
+
+
+// ============================================================
+// START
+// ============================================================
+
+updateDashboard();
+
+
+// Update every 250 ms
+setInterval(
+    updateDashboard,
+    250
+);
+
+</script>
+
+
+</body>
+
+</html>

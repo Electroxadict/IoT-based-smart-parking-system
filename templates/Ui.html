@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Parking System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #050813;
+  --panel: #0a1122;
+  --line: #1c2a4d;
+  --text: #e4efff;
+  --dim: #7488b3;
+  --cyan: #46e6ff;
+  --free: #37f5ac;
+  --busy: #ff4570;
+  --warn: #ffc247;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Chakra Petch", "Segoe UI", Arial, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(900px 500px at 85% -10%, rgba(70,230,255,.12), transparent 60%),
+    radial-gradient(700px 500px at -10% 110%, rgba(120,80,255,.14), transparent 60%),
+    linear-gradient(rgba(70,230,255,.04) 1px, transparent 1px) 0 0 / 44px 44px,
+    linear-gradient(90deg, rgba(70,230,255,.04) 1px, transparent 1px) 0 0 / 44px 44px,
+    var(--bg);
+}
+.wrap { width: 92%; max-width: 1200px; margin: 0 auto; padding: 32px 0 48px; }
+
+/* top bar */
+.top { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin-bottom: 28px; }
+.top h1 { margin: 0; font-size: clamp(26px, 4vw, 40px); font-weight: 700; letter-spacing: .04em; text-shadow: 0 0 22px rgba(70,230,255,.45); }
+.top p { margin: 6px 0 0; color: var(--dim); font-size: 15px; }
+.readout { text-align: right; font-size: 14px; color: var(--dim); }
+.readout strong { color: var(--text); font-weight: 500; }
+#connection { display: inline-flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+#connection::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: currentColor; box-shadow: 0 0 12px currentColor; }
+#connection.online { color: var(--free); }
+#connection.online::before { animation: pulse 1.6s ease-in-out infinite; }
+#connection.offline { color: var(--warn); }
+#connection.error { color: var(--busy); }
+@keyframes pulse { 50% { opacity: .35; } }
+
+/* panels with corner brackets */
+.panel { position: relative; background: linear-gradient(160deg, rgba(20,34,68,.55), rgba(8,14,30,.85)); border: 1px solid var(--line); padding: 22px 24px; }
+.panel::before, .panel::after { content: ""; position: absolute; width: 16px; height: 16px; border: 2px solid var(--cyan); pointer-events: none; }
+.panel::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+.panel::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+.panel h2 { margin: 0 0 16px; font-size: 15px; font-weight: 500; color: var(--cyan); letter-spacing: .06em; }
+
+/* capacity */
+.capacity { display: grid; grid-template-columns: repeat(3, auto) 1fr; gap: 12px 44px; align-items: end; margin-bottom: 24px; }
+.stat span { display: block; color: var(--dim); font-size: 14px; margin-bottom: 2px; }
+.stat b { font-size: 46px; font-weight: 600; line-height: 1; }
+.stat.avail b { color: var(--free); text-shadow: 0 0 18px rgba(55,245,172,.5); }
+.stat.occ b { color: var(--busy); text-shadow: 0 0 18px rgba(255,69,112,.5); }
+.load { height: 10px; background: rgba(255,255,255,.06); border: 1px solid var(--line); align-self: center; position: relative; overflow: hidden; }
+.load i { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(90deg, var(--free), var(--warn), var(--busy)); background-size: 200px 100%; box-shadow: 0 0 14px rgba(70,230,255,.5); transition: width .5s ease; }
+
+/* parking bays */
+.bays { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-bottom: 24px; }
+.slot { position: relative; height: 270px; border: 1px solid; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 16px 18px; transition: border-color .4s, box-shadow .4s, background .4s; }
+.slot.free { border-color: rgba(55,245,172,.55); background: linear-gradient(180deg, rgba(55,245,172,.09), rgba(55,245,172,.02)); box-shadow: inset 0 0 40px rgba(55,245,172,.08), 0 0 22px rgba(55,245,172,.12); color: var(--free); }
+.slot.occupied { border-color: rgba(255,69,112,.7); background: linear-gradient(180deg, rgba(255,69,112,.14), rgba(255,69,112,.03)); box-shadow: inset 0 0 40px rgba(255,69,112,.12), 0 0 26px rgba(255,69,112,.22); color: var(--busy); }
+.slot h2 { margin: 0; font-size: 34px; font-weight: 700; color: var(--text); }
+.slot p { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: .1em; text-align: right; position: relative; z-index: 2; }
+/* bay floor markings */
+.slot::before, .slot::after { content: ""; position: absolute; top: 0; bottom: 0; width: 2px; background: repeating-linear-gradient(180deg, currentColor 0 14px, transparent 14px 26px); opacity: .35; }
+.slot::before { left: 14px; }
+.slot::after { right: 14px; }
+/* top-down car, drives in when a bay becomes occupied */
+.car { position: absolute; left: 50%; top: 52%; width: 92px; height: 158px; margin: -79px 0 0 -46px; border-radius: 26px 26px 16px 16px; background: linear-gradient(180deg, #ff6b8c, #b3203f); box-shadow: 0 0 30px rgba(255,69,112,.55); opacity: 0; transform: translateY(-40px); pointer-events: none; }
+.car::before { content: ""; position: absolute; left: 12px; right: 12px; top: 34px; height: 30px; border-radius: 8px 8px 4px 4px; background: rgba(5,8,19,.75); }
+.car::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 22px; height: 24px; border-radius: 4px 4px 8px 8px; background: rgba(5,8,19,.75); }
+.slot.occupied .car { opacity: 1; transform: none; animation: park .7s cubic-bezier(.2,.8,.2,1); }
+@keyframes park { from { opacity: 0; transform: translateY(-70px); } }
+.slot.free .car { display: block; }
+/* free bay: faint open marker */
+.slot.free h2::after { content: ""; display: block; width: 44px; height: 3px; margin-top: 8px; background: currentColor; box-shadow: 0 0 10px currentColor; }
+
+/* gate readouts */
+.gate { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; }
+.cell { padding: 4px 18px; border-left: 1px solid var(--line); min-width: 0; }
+.cell:first-child { border-left: 0; padding-left: 0; }
+.cell h3 { margin: 0 0 6px; font-size: 14px; font-weight: 400; color: var(--dim); }
+.cell p { margin: 0; font-size: 20px; font-weight: 600; overflow-wrap: anywhere; }
+
+/* console */
+.debug { margin-top: 24px; }
+.debug pre { margin: 0; font: 13px/1.5 ui-monospace, Consolas, monospace; color: var(--cyan); opacity: .85; white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow: auto; }
+
+@media (max-width: 860px) {
+  .capacity { grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .load { grid-column: 1 / -1; }
+  .bays { grid-template-columns: 1fr; }
+  .slot { height: 190px; }
+  .car { width: 62px; height: 108px; margin: -54px 0 0 -31px; }
+  .car::before { top: 24px; height: 20px; left: 8px; right: 8px; }
+  .car::after { bottom: 14px; height: 16px; left: 8px; right: 8px; }
+  .gate { grid-template-columns: 1fr 1fr; gap: 18px 0; }
+  .cell:nth-child(odd) { border-left: 0; padding-left: 0; }
+  .readout { text-align: left; }
+}
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div>
+      <h1>Smart Parking System</h1>
+      <p>ESP32 parking management dashboard</p>
+    </div>
+    <div class="readout">
+      <div id="connection" class="offline">Connecting...</div><br>
+      Last update: <strong id="lastUpdate">Never</strong>
+    </div>
+  </div>
+
+  <div class="panel capacity">
+    <div class="stat"><span>Total slots</span><b id="totalSlots">3</b></div>
+    <div class="stat avail"><span>Available</span><b id="availableSlots">3</b></div>
+    <div class="stat occ"><span>Occupied</span><b id="occupiedSlots">0</b></div>
+    <div class="load" role="presentation"><i id="loadFill"></i></div>
+  </div>
+
+  <div class="bays">
+    <div id="slot2" class="slot free"><h2>P2</h2><div class="car"></div><p id="slot2Text">FREE</p></div>
+    <div id="slot3" class="slot free"><h2>P3</h2><div class="car"></div><p id="slot3Text">FREE</p></div>
+    <div id="slot4" class="slot free"><h2>P4</h2><div class="car"></div><p id="slot4Text">FREE</p></div>
+  </div>
+
+  <div class="panel">
+    <h2>Entry gate</h2>
+    <div class="gate">
+      <div class="cell"><h3>Entry status</h3><p id="entryStatus">WAITING</p></div>
+      <div class="cell"><h3>Barrier</h3><p id="barrier">CLOSED</p></div>
+      <div class="cell"><h3>Entry sensor</h3><p id="vehicle">CLEAR</p></div>
+      <div class="cell"><h3>Last RFID</h3><p id="rfid">NONE</p></div>
+      <div class="cell"><h3>User</h3><p id="user">NONE</p></div>
+    </div>
+  </div>
+
+  <div class="panel debug">
+    <h2>Live API data</h2>
+    <pre id="debugData">Waiting for Flask...</pre>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// UPDATE DASHBOARD
+// ============================================================
+function setText(id, value) {
+  document.getElementById(id).textContent = value;
+}
+
+function setConnection(text, state) {
+  const el = document.getElementById("connection");
+  el.textContent = text;
+  el.className = state;
+}
+
+async function updateDashboard() {
+  try {
+    const response = await fetch("/api/status?t=" + Date.now(), {
+      method: "GET",
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error("HTTP " + response.status);
+    }
+
+    const data = await response.json();
+    console.log("Flask data:", data);
+
+    // Connection
+    if (data.esp32_online) {
+      setConnection("ESP32 connected", "online");
+    } else {
+      setConnection("ESP32 waiting for data", "offline");
+    }
+
+    // Summary
+    setText("totalSlots", data.total_slots);
+    setText("availableSlots", data.available_slots);
+    setText("occupiedSlots", data.occupied_slots);
+
+    const pct = data.total_slots > 0
+      ? Math.min(100, (data.occupied_slots / data.total_slots) * 100)
+      : 0;
+    const fill = document.getElementById("loadFill");
+    fill.style.width = pct + "%";
+    fill.style.backgroundSize = (pct > 0 ? 100 / pct * 100 : 100) + "% 100%";
+
+    // Slots
+    updateSlot("slot2", "slot2Text", data.slot2);
+    updateSlot("slot3", "slot3Text", data.slot3);
+    updateSlot("slot4", "slot4Text", data.slot4);
+
+    // Other data
+    setText("entryStatus", data.entry_status);
+    setText("barrier", data.barrier);
+    setText("vehicle", data.vehicle_detected ? "VEHICLE DETECTED" : "CLEAR");
+    setText("rfid", data.last_rfid);
+    setText("user", data.last_user);
+    setText("lastUpdate", data.last_update);
+
+    // Debug
+    setText("debugData", JSON.stringify(data, null, 2));
+
+  } catch (error) {
+    console.error("Dashboard error:", error);
+    setConnection("Cannot reach Flask", "error");
+    setText("debugData", "ERROR: " + error.message);
+  }
+}
+
+// ============================================================
+// SLOT UPDATE
+// ============================================================
+function updateSlot(slotId, textId, occupied) {
+  const slot = document.getElementById(slotId);
+  const text = document.getElementById(textId);
+
+  if (occupied === true) {
+    slot.classList.remove("free");
+    slot.classList.add("occupied");
+    text.textContent = "OCCUPIED";
+  } else {
+    slot.classList.remove("occupied");
+    slot.classList.add("free");
+    text.textContent = "FREE";
+  }
+}
+
+// ============================================================
+// START
+// ============================================================
+updateDashboard();
+
+// Update every 250 ms
+setInterval(updateDashboard, 250);
+</script>
+</body>
+</html>
